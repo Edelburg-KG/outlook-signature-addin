@@ -77,10 +77,18 @@ Signature" button too; try a reply and a forward.
 ### 4. Deploy to everyone
 
 Microsoft 365 admin center → **Settings → Integrated apps → Upload custom
-apps**. You can upload `manifest.xml` directly as a file (no need to host
-the manifest itself — only the URLs it points to need to be public), target
-**Entire organization** or specific users/groups, and deploy. Allow up to 72
-hours to propagate per Microsoft's own guidance.
+apps**. When asked how to provide the manifest, choose **"Provide link to
+file"** and give it
+`https://edelburg-kg.github.io/outlook-signature-addin/manifest.xml`,
+rather than uploading the file directly. Both work today, but the URL
+option means a future manifest change (version bump, a new button, a
+permission tweak) just needs a `git push` — Outlook re-fetches the manifest
+from that URL periodically, no re-upload through the admin center required.
+A direct file upload is a frozen snapshot: it won't pick up edits to
+`manifest.xml` until someone re-uploads it by hand.
+
+Target **Entire organization** or specific users/groups, and deploy. Allow
+up to 72 hours to propagate per Microsoft's own guidance.
 
 ## Known caveats
 
