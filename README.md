@@ -112,22 +112,23 @@ up to 72 hours to propagate per Microsoft's own guidance.
 
 ## Known caveats
 
-- **`setSignatureAsync` fails deterministically in Outlook on the web for
-  this add-in** with `Host Error` / code 5000 ("The operation is not
-  supported"), identically whether sideloaded or admin-deployed, on all
-  retries, with an HTML-format compose, a 2.5 KB payload, CORS confirmed
-  working, and the call shape matching Microsoft's own sample. Every cause
-  the API docs list (`DataExceedsMaximumSize`, `InvalidFormatError`,
-  appointment items, `loadItemByIdAsync` items) is ruled out.
-  `functions.js` therefore logs full diagnostics (host, version, requirement
-  set, item type, body format) and, after the retries, falls back to
-  `body.prependAsync` — a plain body write supported since Mailbox 1.1 that
-  bypasses the signature subsystem. The fallback doesn't get
-  replace-on-reinsert semantics and dirties the form, but it inserts the
-  signature. If the fallback is what ends up firing in practice, the
-  remaining step is a GitHub issue on `OfficeDev/office-js` with the console
-  output, which is where Microsoft's troubleshooting guide sends you once
-  self-service diagnosis is exhausted.
+- **The signature HTML must not reference an SVG image.** Outlook on the
+  web rejects *every* body write (`setSignatureAsync`, `prependAsync`,
+  `setAsync`) whose HTML contains `<img src="….svg">`, and the only error
+  it gives is the generic `Host Error` / code 5000 ("The operation is not
+  supported") — nothing points at the image. The Office.Body API notes say
+  "SVG files aren't supported in mail signatures. Use JPG or PNG files
+  instead", and Microsoft confirmed this as the cause of the identical
+  symptom in `OfficeDev/office-js#6020`. This add-in's first version shipped
+  with the logo as an SVG and failed deterministically for days across
+  sideloaded and admin-deployed installs before that was found. The
+  `signatures` repo now renders the logo to PNG; `functions.js` logs a
+  `console.error` if a fetched signature ever references an `.svg` again.
+- **Fallback path.** If `setSignatureAsync` still fails after its retries,
+  `functions.js` falls back to `body.prependAsync`, a plain body write
+  supported since Mailbox 1.1. It lacks replace-on-reinsert semantics and
+  dirties the form, so it should never be the path that runs in practice;
+  the console's final `done:` line says which path did.
 
 - **`OnNewMessageCompose` event-based activation has had reported reliability
   gaps on some Outlook desktop builds** (tracked upstream in

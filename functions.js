@@ -152,6 +152,18 @@ function checkSignature(eventObj) {
     })
     .then(function (html) {
       console.log("[Edelburg Signature] fetched HTML length:", html.length);
+      // Outlook on the web refuses every body write whose HTML references
+      // an SVG image, with nothing more specific than "Host Error" 5000
+      // (Office.Body docs: "SVG files aren't supported in mail signatures";
+      // OfficeDev/office-js#6020). That cost days to find once, so make it
+      // loud if it ever regresses in the hosted signature files.
+      if (/<img[^>]+src=["'][^"']*\.svg(\?[^"']*)?["']/i.test(html)) {
+        console.error(
+          "[Edelburg Signature] signature HTML references an .svg image — " +
+          "Outlook on the web will reject the insert with Host Error 5000. " +
+          "Serve a PNG/JPG instead."
+        );
+      }
       logDiagnostics(function () {
         trySetSignature(html, eventObj, 0);
       });
