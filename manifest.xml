@@ -65,58 +65,22 @@
           </Runtimes>
 
           <DesktopFormFactor>
-            <FunctionFile resid="Functions.Url" />
-
-            <ExtensionPoint xsi:type="MessageComposeCommandSurface">
-              <OfficeTab id="TabDefault">
-                <Group id="msgComposeGroup">
-                  <Label resid="residGroupLabel"/>
-                  <Control xsi:type="Button" id="InsertSignatureButton">
-                    <Label resid="residButtonLabel"/>
-                    <Supertip>
-                      <Title resid="residButtonLabel" />
-                      <Description resid="residButtonTooltip" />
-                    </Supertip>
-                    <Icon>
-                      <bt:Image size="16" resid="Icon16x16" />
-                      <bt:Image size="32" resid="Icon32x32" />
-                      <bt:Image size="80" resid="Icon80x80" />
-                    </Icon>
-                    <Action xsi:type="ExecuteFunction">
-                      <FunctionName>insertSignatureCommand</FunctionName>
-                    </Action>
-                  </Control>
-                </Group>
-              </OfficeTab>
-            </ExtensionPoint>
-
             <ExtensionPoint xsi:type="LaunchEvent">
               <LaunchEvents>
                 <LaunchEvent Type="OnNewMessageCompose" FunctionName="checkSignature" />
               </LaunchEvents>
               <SourceLocation resid="Functions.Url" />
             </ExtensionPoint>
-
           </DesktopFormFactor>
         </Host>
       </Hosts>
       <Resources>
-        <bt:Images>
-          <bt:Image id="Icon16x16" DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/icon-16.png"></bt:Image>
-          <bt:Image id="Icon32x32" DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/icon-32.png"></bt:Image>
-          <bt:Image id="Icon80x80" DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/icon-80.png"></bt:Image>
-        </bt:Images>
         <bt:Urls>
           <bt:Url id="Functions.Url" DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/functions.html"></bt:Url>
           <bt:Url id="Functions.Js.Url" DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/functions.js"></bt:Url>
         </bt:Urls>
-        <bt:ShortStrings>
-          <bt:String id="residGroupLabel" DefaultValue="Edelburg"></bt:String>
-          <bt:String id="residButtonLabel" DefaultValue="Insert Signature"></bt:String>
-        </bt:ShortStrings>
         <bt:LongStrings>
           <bt:String id="residAppDesc" DefaultValue="Automatically inserts your Edelburg email signature when you compose, reply, or forward."></bt:String>
-          <bt:String id="residButtonTooltip" DefaultValue="Manually (re)insert your Edelburg signature into this message."></bt:String>
         </bt:LongStrings>
       </Resources>
     </VersionOverrides>

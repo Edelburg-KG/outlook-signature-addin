@@ -28,15 +28,25 @@ someone deliberately guessing a specific person's filename.
 ## Files
 
 - `manifest.xml` — the add-in manifest (classic XML, not the unified
-  Microsoft 365 JSON manifest). References the four items below by URL.
-- `functions.html` / `functions.js` — the actual logic. One shared script:
-  `checkSignature()` runs automatically via a `LaunchEvent` on
-  `OnNewMessageCompose` (fires for new messages, replies, *and* forwards);
-  `insertSignatureCommand()` backs a manual "Insert Signature" ribbon button
-  for when auto-insert didn't fire or the user cleared the signature.
-- `assets/icon-{16,32,80,128}.png` — ribbon/store icons, generated to match
-  the signature's palette (`#17241e` dark green, `#ab9569` gold, `#f4efe1`
-  cream).
+  Microsoft 365 JSON manifest). References `functions.html`/`functions.js`
+  and the icons below by URL.
+- `functions.html` / `functions.js` — the actual logic. `checkSignature()`
+  runs automatically via a `LaunchEvent` on `OnNewMessageCompose` (fires for
+  new messages, replies, *and* forwards) — no task pane or button involved.
+  Every step is logged to the console for diagnosability, since failures
+  are deliberately silent to the end user (see Known caveats).
+- `assets/icon-{16,32,80,128}.png` — icons for the add-in listing, generated
+  to match the signature's palette (`#17241e` dark green, `#ab9569` gold,
+  `#f4efe1` cream). Currently unreferenced by the manifest's extension
+  points (no ribbon button), kept for `IconUrl`/`HighResolutionIconUrl` and
+  in case a manual-insert button gets reintroduced later.
+
+An earlier version also had a manual "Insert Signature" ribbon button
+(`ExecuteFunction` action + `FunctionFile`). Dropped after live testing
+showed neither the button *nor* the automatic path loaded `functions.html`
+at all — see git history. Simplifying to just `<Runtimes>` + `LaunchEvent`,
+matching Microsoft's own working sample exactly, isolates whether that core
+mechanism works before any extra complexity gets reintroduced.
 
 ## Setup
 
@@ -61,18 +71,28 @@ loads (empty page is correct — there's no visible UI).
 ### 2. Fix the URLs if you used a different repo name/org
 
 `manifest.xml` assumes `https://edelburg-kg.github.io/outlook-signature-addin/`
-in six places (`IconUrl`, `HighResolutionIconUrl`, the legacy
-`SourceLocation`, and the three `bt:Url`/`bt:Image` entries under
-`Resources`). If your repo ends up somewhere else, update all six before
-deploying — a mismatched URL there means Outlook can't load the icons or the
-runtime and the add-in silently fails to activate.
+in five places (`IconUrl`, `HighResolutionIconUrl`, the legacy
+`SourceLocation`, and the two `bt:Url` entries under `Resources`). If your
+repo ends up somewhere else, update all five before deploying — a
+mismatched URL there means Outlook can't load the icon or the runtime and
+the add-in silently fails to activate.
 
 ### 3. Test before rolling out
 
 Sideload for a single-mailbox test: Outlook → **Get Add-ins → My add-ins →
 Add a custom add-in → Add from file** → select your local `manifest.xml`.
-Open a new message and confirm the signature appears; try the "Insert
-Signature" button too; try a reply and a forward.
+Open a new message and confirm the signature appears automatically; try a
+reply and a forward too.
+
+If nothing appears: open the browser devtools console *before* composing,
+clear it, then open the compose window. Check the frame/context selector at
+the top of the Console panel — `functions.html` runs in its own frame
+(`edelburg-kg.github.io`), and by default the console only shows the host
+page's (e.g. `outlook.cloud.microsoft`) output. If that frame isn't listed
+in the selector at all, `functions.html` never loaded — a manifest/plumbing
+problem, not a bug inside `functions.js`. If it is listed and you switch to
+it, every step logs (see `functions.js`), so a fetch failure, CORS block,
+or `setSignatureAsync` error will show up explicitly rather than as silence.
 
 ### 4. Deploy to everyone
 
@@ -95,8 +115,10 @@ up to 72 hours to propagate per Microsoft's own guidance.
 - **`OnNewMessageCompose` event-based activation has had reported reliability
   gaps on some Outlook desktop builds** (tracked upstream in
   `OfficeDev/office-js`) — occasionally it doesn't fire on a fresh compose
-  window. The manual "Insert Signature" button exists specifically as the
-  fallback for this.
+  window. There's currently no manual fallback button (see Files above) —
+  worth reintroducing once the core mechanism is confirmed working, this
+  time verified in isolation rather than assumed correct from an unverified
+  manifest pattern.
 - **`setSignatureAsync` can duplicate rather than replace** a signature if
   the same draft is opened across different Outlook platforms in sequence
   (tracked as `OfficeDev/office-js#5483`, unresolved upstream). Edge case,
