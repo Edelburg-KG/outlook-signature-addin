@@ -30,6 +30,34 @@ function getAliasFromEmail(email) {
   return email.split("@")[0].toLowerCase();
 }
 
+// setSignatureAsync has documented timing issues: it can fail (observed as
+// a generic "Host Error" / code 5000, "The operation is not supported")
+// when called before the compose editor has fully finished initializing,
+// which happens easily here since OnNewMessageCompose fires very early.
+// Retry a few times with backoff before giving up.
+const SET_SIGNATURE_RETRY_DELAYS_MS = [300, 800, 1500];
+
+function trySetSignature(html, eventObj, attempt) {
+  Office.context.mailbox.item.body.setSignatureAsync(
+    html,
+    { coercionType: Office.CoercionType.Html },
+    function (asyncResult) {
+      console.log(
+        "[Edelburg Signature] setSignatureAsync attempt " + attempt + " result:",
+        asyncResult.status,
+        asyncResult.error
+      );
+      if (asyncResult.status === Office.AsyncResultStatus.Failed && attempt < SET_SIGNATURE_RETRY_DELAYS_MS.length) {
+        setTimeout(function () {
+          trySetSignature(html, eventObj, attempt + 1);
+        }, SET_SIGNATURE_RETRY_DELAYS_MS[attempt]);
+        return;
+      }
+      eventObj.completed();
+    }
+  );
+}
+
 function checkSignature(eventObj) {
   console.log("[Edelburg Signature] checkSignature fired");
 
@@ -56,14 +84,7 @@ function checkSignature(eventObj) {
     })
     .then(function (html) {
       console.log("[Edelburg Signature] fetched HTML length:", html.length);
-      Office.context.mailbox.item.body.setSignatureAsync(
-        html,
-        { coercionType: Office.CoercionType.Html },
-        function (asyncResult) {
-          console.log("[Edelburg Signature] setSignatureAsync result:", asyncResult.status, asyncResult.error);
-          eventObj.completed();
-        }
-      );
+      trySetSignature(html, eventObj, 0);
     })
     .catch(function (error) {
       // No hosted signature for this mailbox (shared/guest mailbox, or not
