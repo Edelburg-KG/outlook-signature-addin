@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="MailApp">
+  <Id>31e1835d-e3f8-4deb-b41b-65638d794744</Id>
+  <Version>1.1</Version>
+  <ProviderName>Edelburg GmbH &amp; Co. KG</ProviderName>
+  <DefaultLocale>en-us</DefaultLocale>
+  <DisplayName DefaultValue="Edelburg Signature (DEV)"/>
+  <Description DefaultValue="Dev/sideload-only copy for local testing. Uses a different Id than the admin-deployed add-in so the two can't collide or shadow one another."/>
+  <IconUrl DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/icon-32.png"/>
+  <HighResolutionIconUrl DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/icon-128.png"/>
+  <SupportUrl DefaultValue="https://www.edelburg.com"/>
+  <AppDomains>
+    <AppDomain>https://s3-signatures.edelburg.net</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Mailbox"/>
+  </Hosts>
+
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="Mailbox" />
+    </Sets>
+  </Requirements>
+
+  <!-- Legacy schema, superseded by VersionOverrides below on any client that
+       understands it. Kept only so very old hosts don't reject the manifest
+       outright; it has no UI of its own. -->
+  <FormSettings>
+    <Form xsi:type="ItemRead">
+      <DesktopSettings>
+        <SourceLocation DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/functions.html"/>
+        <RequestedHeight>250</RequestedHeight>
+      </DesktopSettings>
+    </Form>
+  </FormSettings>
+  <Permissions>ReadWriteMailbox</Permissions>
+  <Rule xsi:type="RuleCollection" Mode="Or">
+    <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read" />
+  </Rule>
+  <DisableEntityHighlighting>true</DisableEntityHighlighting>
+  <!-- /Legacy schema. -->
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides/1.1" xsi:type="VersionOverridesV1_1">
+      <Description resid="residAppDesc" />
+
+      <Requirements>
+        <bt:Sets DefaultMinVersion="1.10">
+          <bt:Set Name="Mailbox" />
+        </bt:Sets>
+      </Requirements>
+
+      <Hosts>
+        <Host xsi:type="MailHost">
+          <!-- Event-based activation: runs checkSignature() whenever the
+               user opens a new compose window (new message, reply, or
+               forward), with no task pane or click required. -->
+          <Runtimes>
+            <Runtime resid="Functions.Url">
+              <Override type="javascript" resid="Functions.Js.Url"/>
+            </Runtime>
+          </Runtimes>
+
+          <DesktopFormFactor>
+            <ExtensionPoint xsi:type="LaunchEvent">
+              <LaunchEvents>
+                <LaunchEvent Type="OnNewMessageCompose" FunctionName="checkSignature" />
+              </LaunchEvents>
+              <SourceLocation resid="Functions.Url" />
+            </ExtensionPoint>
+          </DesktopFormFactor>
+        </Host>
+      </Hosts>
+      <Resources>
+        <bt:Urls>
+          <bt:Url id="Functions.Url" DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/functions.html"></bt:Url>
+          <bt:Url id="Functions.Js.Url" DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/functions.js"></bt:Url>
+        </bt:Urls>
+        <bt:LongStrings>
+          <bt:String id="residAppDesc" DefaultValue="Automatically inserts your Edelburg email signature when you compose, reply, or forward."></bt:String>
+        </bt:LongStrings>
+      </Resources>
+    </VersionOverrides>
+  </VersionOverrides>
+</OfficeApp>
