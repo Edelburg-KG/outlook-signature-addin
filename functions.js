@@ -40,7 +40,7 @@ const SET_SIGNATURE_RETRY_DELAYS_MS = [300, 800, 1500];
 function trySetSignature(html, eventObj, attempt) {
   Office.context.mailbox.item.body.setSignatureAsync(
     html,
-    { coercionType: Office.CoercionType.Html },
+    { coercionType: Office.CoercionType.Html, asyncContext: eventObj },
     function (asyncResult) {
       console.log(
         "[Edelburg Signature] setSignatureAsync attempt " + attempt + " result:",
@@ -53,7 +53,7 @@ function trySetSignature(html, eventObj, attempt) {
         }, SET_SIGNATURE_RETRY_DELAYS_MS[attempt]);
         return;
       }
-      eventObj.completed();
+      asyncResult.asyncContext.completed();
     }
   );
 }
