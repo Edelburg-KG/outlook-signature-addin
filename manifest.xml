@@ -4,7 +4,7 @@
   xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
   xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="MailApp">
   <Id>4239b400-4f34-4323-b6a0-d407f5d34572</Id>
-  <Version>1.0</Version>
+  <Version>1.1</Version>
   <ProviderName>Edelburg GmbH &amp; Co. KG</ProviderName>
   <DefaultLocale>en-us</DefaultLocale>
   <DisplayName DefaultValue="Edelburg Signature"/>
