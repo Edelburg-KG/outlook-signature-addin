@@ -142,7 +142,10 @@ function checkSignature(eventObj) {
   const url = SIGNATURE_BASE_URL + "/" + encodeURIComponent(alias) + ".html";
   console.log("[Edelburg Signature] fetching", url);
 
-  fetch(url)
+  // no-store: the signature files change rarely, but when they do (a new
+  // title, a fixed logo) a stale browser-cached copy is exactly the kind
+  // of failure nobody notices until an email has gone out with it.
+  fetch(url, { cache: "no-store" })
     .then(function (response) {
       console.log("[Edelburg Signature] fetch response status:", response.status);
       if (!response.ok) {
