@@ -30,30 +30,98 @@ function getAliasFromEmail(email) {
   return email.split("@")[0].toLowerCase();
 }
 
-// setSignatureAsync has documented timing issues: it can fail (observed as
-// a generic "Host Error" / code 5000, "The operation is not supported")
-// when called before the compose editor has fully finished initializing,
-// which happens easily here since OnNewMessageCompose fires very early.
-// Retry a few times with backoff before giving up.
+// Everything we can cheaply learn about the environment before touching the
+// body. Logged once per compose so a failure report carries the context
+// Microsoft asks for (host, version, requirement set, item type, body format).
+function logDiagnostics(callback) {
+  const item = Office.context.mailbox.item;
+  const diag = Office.context.mailbox.diagnostics || {};
+  let mailbox110 = null;
+  try {
+    mailbox110 = Office.context.requirements.isSetSupported("Mailbox", "1.10");
+  } catch (e) {
+    mailbox110 = "isSetSupported threw: " + e;
+  }
+  console.log("[Edelburg Signature] diagnostics:", {
+    hostName: diag.hostName,
+    hostVersion: diag.hostVersion,
+    OWAView: diag.OWAView,
+    platform: Office.context.platform,
+    mailbox110: mailbox110,
+    itemType: item ? item.itemType : "(no item)",
+    hasSetSignatureAsync: !!(item && item.body && typeof item.body.setSignatureAsync === "function"),
+    hasPrependAsync: !!(item && item.body && typeof item.body.prependAsync === "function")
+  });
+
+  if (item && item.body && typeof item.body.getTypeAsync === "function") {
+    item.body.getTypeAsync(function (result) {
+      console.log("[Edelburg Signature] body.getTypeAsync:", result.status, result.value, result.error);
+      callback();
+    });
+  } else {
+    console.log("[Edelburg Signature] body.getTypeAsync not available");
+    callback();
+  }
+}
+
+// setSignatureAsync is the right API: it places the signature where Outlook
+// would put its own, replaces an existing one instead of stacking, and
+// doesn't dirty the form. In Outlook on the web it has been observed failing
+// deterministically with a generic "Host Error" / code 5000 ("The operation
+// is not supported") for this add-in, with every documented cause ruled out.
+// So: try it a few times (it does have documented early-compose timing
+// issues), and if it still fails, fall back to prependAsync — a plain body
+// write that's been supported since Mailbox 1.1 and doesn't go through the
+// signature subsystem at all. The fallback is slightly less polished (no
+// replace-on-reinsert semantics; a blank line is prepended so the cursor has
+// somewhere to go above the signature) but it gets a signature into the
+// message, which is the point.
 const SET_SIGNATURE_RETRY_DELAYS_MS = [300, 800, 1500];
+
+function finish(eventObj, label) {
+  console.log("[Edelburg Signature] done:", label);
+  eventObj.completed();
+}
+
+function fallbackPrepend(html, eventObj) {
+  console.log("[Edelburg Signature] falling back to body.prependAsync");
+  Office.context.mailbox.item.body.prependAsync(
+    "<div><br></div>" + html,
+    { coercionType: Office.CoercionType.Html },
+    function (asyncResult) {
+      console.log(
+        "[Edelburg Signature] prependAsync result:",
+        asyncResult.status,
+        asyncResult.error
+      );
+      finish(eventObj, asyncResult.status === Office.AsyncResultStatus.Succeeded
+        ? "signature inserted via prependAsync fallback"
+        : "prependAsync fallback also failed");
+    }
+  );
+}
 
 function trySetSignature(html, eventObj, attempt) {
   Office.context.mailbox.item.body.setSignatureAsync(
     html,
-    { coercionType: Office.CoercionType.Html, asyncContext: eventObj },
+    { coercionType: Office.CoercionType.Html },
     function (asyncResult) {
       console.log(
         "[Edelburg Signature] setSignatureAsync attempt " + attempt + " result:",
         asyncResult.status,
         asyncResult.error
       );
-      if (asyncResult.status === Office.AsyncResultStatus.Failed && attempt < SET_SIGNATURE_RETRY_DELAYS_MS.length) {
+      if (asyncResult.status === Office.AsyncResultStatus.Succeeded) {
+        finish(eventObj, "signature set via setSignatureAsync");
+        return;
+      }
+      if (attempt < SET_SIGNATURE_RETRY_DELAYS_MS.length) {
         setTimeout(function () {
           trySetSignature(html, eventObj, attempt + 1);
         }, SET_SIGNATURE_RETRY_DELAYS_MS[attempt]);
         return;
       }
-      asyncResult.asyncContext.completed();
+      fallbackPrepend(html, eventObj);
     }
   );
 }
@@ -84,7 +152,9 @@ function checkSignature(eventObj) {
     })
     .then(function (html) {
       console.log("[Edelburg Signature] fetched HTML length:", html.length);
-      trySetSignature(html, eventObj, 0);
+      logDiagnostics(function () {
+        trySetSignature(html, eventObj, 0);
+      });
     })
     .catch(function (error) {
       // No hosted signature for this mailbox (shared/guest mailbox, or not
