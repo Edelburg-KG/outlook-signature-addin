@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- LAF tenant. Same code as manifest.xml
+     (Edelburg tenant); differs in Id, names, icons, French ribbon strings,
+     the task pane URL (?lang=fr&auto=0) and, on purpose, has no
+     OnNewMessageCompose launch event: LAF mailboxes never get a signature
+     inserted automatically, only one picked in the panel. Keep the rest
+     in step. -->
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="MailApp">
+  <Id>a7fb092f-e4eb-4adf-bb8e-e62ab4029536</Id>
+  <Version>1.2</Version>
+  <ProviderName>LAF</ProviderName>
+  <DefaultLocale>fr-fr</DefaultLocale>
+  <DisplayName DefaultValue="LAF Signatures"/>
+  <Description DefaultValue="Insère la signature e-mail de votre choix lors de la rédaction, de la réponse ou du transfert."/>
+  <IconUrl DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/laf/icon-64.png"/>
+  <HighResolutionIconUrl DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/laf/icon-128.png"/>
+  <SupportUrl DefaultValue="https://github.com/Edelburg-KG/outlook-signature-addin"/>
+  <AppDomains>
+    <AppDomain>https://s3-signatures.edelburg.net</AppDomain>
+  </AppDomains>
+  <Hosts>
+    <Host Name="Mailbox"/>
+  </Hosts>
+
+  <Requirements>
+    <Sets DefaultMinVersion="1.1">
+      <Set Name="Mailbox" />
+    </Sets>
+  </Requirements>
+
+  <!-- Legacy schema, superseded by VersionOverrides below on any client that
+       understands it. Kept only so very old hosts don't reject the manifest
+       outright; it has no UI of its own. -->
+  <FormSettings>
+    <Form xsi:type="ItemRead">
+      <DesktopSettings>
+        <SourceLocation DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/functions.html"/>
+        <RequestedHeight>250</RequestedHeight>
+      </DesktopSettings>
+    </Form>
+  </FormSettings>
+  <Permissions>ReadWriteMailbox</Permissions>
+  <Rule xsi:type="RuleCollection" Mode="Or">
+    <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read" />
+  </Rule>
+  <DisableEntityHighlighting>true</DisableEntityHighlighting>
+  <!-- /Legacy schema. -->
+
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
+    <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides/1.1" xsi:type="VersionOverridesV1_1">
+      <Description resid="residAppDesc" />
+
+      <Requirements>
+        <bt:Sets DefaultMinVersion="1.10">
+          <bt:Set Name="Mailbox" />
+        </bt:Sets>
+      </Requirements>
+
+      <Hosts>
+        <Host xsi:type="MailHost">
+          <DesktopFormFactor>
+            <!-- Required by the schema whenever commands are declared; no
+                 command uses it (the button below opens a task pane). -->
+            <FunctionFile resid="Functions.Url" />
+
+            <!-- "Signature" button on the compose ribbon: opens taskpane.html,
+                 which lists the mailbox's signatures from <domain>/<local>.json on R2.
+                 That list lives outside the manifest on purpose, so adding
+                 a signature never needs a manifest update. -->
+            <ExtensionPoint xsi:type="MessageComposeCommandSurface">
+              <OfficeTab id="TabDefault">
+                <Group id="SignatureGroup">
+                  <Label resid="SignatureGroup.Label" />
+                  <Control xsi:type="Button" id="SignatureButton">
+                    <Label resid="SignatureButton.Label" />
+                    <Supertip>
+                      <Title resid="SignatureButton.Label" />
+                      <Description resid="SignatureButton.Tip" />
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.16x16" />
+                      <bt:Image size="32" resid="Icon.32x32" />
+                      <bt:Image size="80" resid="Icon.80x80" />
+                    </Icon>
+                    <Action xsi:type="ShowTaskpane">
+                      <SourceLocation resid="Taskpane.Url" />
+                    </Action>
+                  </Control>
+                </Group>
+              </OfficeTab>
+            </ExtensionPoint>
+          </DesktopFormFactor>
+        </Host>
+      </Hosts>
+      <Resources>
+        <bt:Images>
+          <bt:Image id="Icon.16x16" DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/laf/icon-16.png" />
+          <bt:Image id="Icon.32x32" DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/laf/icon-32.png" />
+          <bt:Image id="Icon.80x80" DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/laf/icon-80.png" />
+        </bt:Images>
+        <bt:Urls>
+          <bt:Url id="Functions.Url" DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/functions.html"></bt:Url>
+                    <bt:Url id="Taskpane.Url" DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/taskpane.html?lang=fr&amp;auto=0"></bt:Url>
+        </bt:Urls>
+        <bt:ShortStrings>
+          <bt:String id="SignatureGroup.Label" DefaultValue="LAF" />
+          <bt:String id="SignatureButton.Label" DefaultValue="Signature" />
+        </bt:ShortStrings>
+        <bt:LongStrings>
+          <bt:String id="residAppDesc" DefaultValue="Insère la signature e-mail de votre choix lors de la rédaction, de la réponse ou du transfert."></bt:String>
+          <bt:String id="SignatureButton.Tip" DefaultValue="Choisir une autre signature pour cet e-mail." />
+        </bt:LongStrings>
+      </Resources>
+    </VersionOverrides>
+  </VersionOverrides>
+</OfficeApp>
