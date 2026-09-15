@@ -9,7 +9,7 @@
   <DefaultLocale>en-us</DefaultLocale>
   <DisplayName DefaultValue="Edelburg Signature"/>
   <Description DefaultValue="Automatically inserts your Edelburg email signature when you compose, reply, or forward."/>
-  <IconUrl DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/icon-32.png"/>
+  <IconUrl DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/icon-64.png"/>
   <HighResolutionIconUrl DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/icon-128.png"/>
   <SupportUrl DefaultValue="https://github.com/Edelburg-KG/outlook-signature-addin"/>
   <AppDomains>

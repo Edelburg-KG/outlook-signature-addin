@@ -9,7 +9,7 @@
   <DefaultLocale>en-us</DefaultLocale>
   <DisplayName DefaultValue="Edelburg Signature (DEV)"/>
   <Description DefaultValue="Dev/sideload-only copy for local testing. Uses a different Id than the admin-deployed add-in so the two can't collide or shadow one another."/>
-  <IconUrl DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/icon-32.png"/>
+  <IconUrl DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/icon-64.png"/>
   <HighResolutionIconUrl DefaultValue="https://edelburg-kg.github.io/outlook-signature-addin/assets/icon-128.png"/>
   <SupportUrl DefaultValue="https://github.com/Edelburg-KG/outlook-signature-addin"/>
   <AppDomains>
